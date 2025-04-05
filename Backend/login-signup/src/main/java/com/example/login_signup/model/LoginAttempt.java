@@ -10,20 +10,20 @@ public class LoginAttempt {
 
 
     @Id
-    private String email;  // Email as the primary key
+    private String email;  
     private int failedAttempts;
     private boolean locked;
     private Timestamp lockTime;
 
-    // No-argument constructor required by JPA
+
     public LoginAttempt() {}
 
-    // Constructor to initialize email
+
     public LoginAttempt(String email) {
         this.email = email;
-        this.failedAttempts = 0;  // Initialize failed attempts to 0
-        this.locked = false;      // Account not locked by default
-        this.lockTime = null;     // No lock time initially
+        this.failedAttempts = 0;  
+        this.locked = false;     
+        this.lockTime = null;    
     }
 
     // Getters and Setters

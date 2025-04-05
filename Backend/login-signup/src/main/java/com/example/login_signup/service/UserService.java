@@ -35,7 +35,7 @@ public class UserService {
 
     @Autowired
     public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder,
-                       JavaMailSender mailSender, JwtUtil jwtUtil) {
+            JavaMailSender mailSender, JwtUtil jwtUtil) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.mailSender = mailSender;
@@ -55,7 +55,9 @@ public class UserService {
 
         // Validate password
         if (!isValidPassword(user.getPassword())) {
-            throw new CustomException("Password must be at least 8 characters long and contain at least one uppercase letter, one digit, and one special character.", HttpStatus.BAD_REQUEST.value());
+            throw new CustomException(
+                    "Password must be at least 8 characters long and contain at least one uppercase letter, one digit, and one special character.",
+                    HttpStatus.BAD_REQUEST.value());
         }
 
         // Encrypt password and set verification token
@@ -81,8 +83,10 @@ public class UserService {
             throw new CustomException("Invalid or expired verification token.", HttpStatus.BAD_REQUEST.value());
         }
     }
+
     @Autowired
     private JwtTokenRepository jwtTokenRepository;
+
     public JwtToken authenticateUser(String email, String password) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new CustomException("User not found", HttpStatus.BAD_REQUEST.value()));
@@ -96,19 +100,24 @@ public class UserService {
             throw new CustomException("Invalid credentials", HttpStatus.UNAUTHORIZED.value());
         }
 
-       resetFailedLoginAttempts(email);
-//        String token = jwtUtil.generateToken(email);
-//        return new JwtToken(token);
+        resetFailedLoginAttempts(email);
+        // String token = jwtUtil.generateToken(email);
+        // return new JwtToken(token);
 
         String token = jwtUtil.generateToken(email);
         JwtToken jwtToken = new JwtToken(email, token);
-        jwtTokenRepository.save(jwtToken);  // ✅ Save token in DB
+        jwtTokenRepository.save(jwtToken); // ✅ Save token in DB
 
         return jwtToken;
     }
 
+    public Optional<User> findByEmail(String email) {
+        return userRepository.findByEmail(email);
+    }
+
     private boolean isValidPassword(String password) {
-        // Password must contain at least one uppercase letter, one digit, and one special character
+        // Password must contain at least one uppercase letter, one digit, and one
+        // special character
         return password.matches("^(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$");
     }
 
@@ -124,7 +133,8 @@ public class UserService {
     private void sendVerificationEmail(User user) {
         String subject = "Email Verification";
         String verificationUrl = "http://localhost:9097/api/auth/verify?token=" + user.getVerificationToken();
-        String message = "Hello " + user.getName() + ",\n\nPlease verify your email by clicking the link below:\n" + verificationUrl +
+        String message = "Hello " + user.getName() + ",\n\nPlease verify your email by clicking the link below:\n"
+                + verificationUrl +
                 "\n\nIf you did not register, please ignore this email.";
 
         SimpleMailMessage mailMessage = new SimpleMailMessage();
@@ -136,21 +146,16 @@ public class UserService {
         mailSender.send(mailMessage);
     }
 
-
     @Autowired
     private PasswordResetTokenRepository passwordResetTokenRepository;
-
-
-
-
 
     // Request Password Reset (forgot password)
     public String requestPasswordReset(String email) {
         System.out.println("Received email: " + email);
-//        User user = userRepository.findByEmail(email)
-//                .orElseThrow(() -> new CustomException("User not found", 400));
+        // User user = userRepository.findByEmail(email)
+        // .orElseThrow(() -> new CustomException("User not found", 400));
 
-        System.out.println("🔍 Received email for reset: [" + email + "]");  // Debug log
+        System.out.println("🔍 Received email for reset: [" + email + "]"); // Debug log
 
         if (email == null || email.trim().isEmpty()) {
             throw new CustomException("Email cannot be empty", 400);
@@ -169,7 +174,7 @@ public class UserService {
         PasswordResetToken resetToken = new PasswordResetToken();
         resetToken.setEmail(email);
         resetToken.setToken(token);
-        resetToken.setExpiryDate(new Timestamp(System.currentTimeMillis() + 3600000));  // Token valid for 1 hour
+        resetToken.setExpiryDate(new Timestamp(System.currentTimeMillis() + 3600000)); // Token valid for 1 hour
         passwordResetTokenRepository.save(resetToken);
 
         // Send email with token
@@ -221,20 +226,15 @@ public class UserService {
         mailSender.send(mailMessage);
     }
 
-
-
-
-
-//    private void trackFailedLogin(String email) {
-//        loginAttempts.put(email, loginAttempts.getOrDefault(email, 0) + 1);
-//        if (loginAttempts.get(email) >= 5) {
-//            throw new CustomException("Account locked due to multiple failed login attempts.", HttpStatus.LOCKED.value());
-//        }
-//    }
-@Autowired
-private LoginAttemptRepository loginAttemptRepository;
-
-
+    // private void trackFailedLogin(String email) {
+    // loginAttempts.put(email, loginAttempts.getOrDefault(email, 0) + 1);
+    // if (loginAttempts.get(email) >= 5) {
+    // throw new CustomException("Account locked due to multiple failed login
+    // attempts.", HttpStatus.LOCKED.value());
+    // }
+    // }
+    @Autowired
+    private LoginAttemptRepository loginAttemptRepository;
 
     public void trackFailedLogin(String email) {
         LoginAttempt loginAttempt = loginAttemptRepository.findById(email)
@@ -246,14 +246,14 @@ private LoginAttemptRepository loginAttemptRepository;
             loginAttempt.setLocked(true);
             loginAttempt.setLockTime(new Timestamp(System.currentTimeMillis()));
             loginAttemptRepository.save(loginAttempt);
-            throw new CustomException("Account locked due to multiple failed login attempts.", HttpStatus.LOCKED.value());
+            throw new CustomException("Account locked due to multiple failed login attempts.",
+                    HttpStatus.LOCKED.value());
         } else {
             loginAttemptRepository.save(loginAttempt);
         }
     }
 
-
-   public void resetFailedLoginAttempts(String email) {
+    public void resetFailedLoginAttempts(String email) {
         LoginAttempt loginAttempt = loginAttemptRepository.findById(email)
                 .orElseThrow(() -> new CustomException("User not found", HttpStatus.BAD_REQUEST.value()));
 
@@ -262,6 +262,7 @@ private LoginAttemptRepository loginAttemptRepository;
         loginAttempt.setLockTime(null);
         loginAttemptRepository.save(loginAttempt);
     }
+
     public boolean isAccountLocked(LoginAttempt loginAttempt) {
         if (loginAttempt.isLocked()) {
             long lockDuration = 30 * 60 * 1000; // 30 minutes
@@ -280,4 +281,3 @@ private LoginAttemptRepository loginAttemptRepository;
     }
 
 }
-

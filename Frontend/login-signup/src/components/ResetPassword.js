@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { resetPassword } from "../api";
 
@@ -6,6 +7,8 @@ const ResetPassword = () => {
   const [searchParams] = useSearchParams();
   console.log("SearchParams object:", searchParams.toString()); 
   const token = searchParams.get("token");
+
+  
 
   console.log("Extracted Token from URL:", token);
 
@@ -15,6 +18,25 @@ const ResetPassword = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   const navigate = useNavigate();
+  useEffect(() => {
+    if (!token) {
+      const timer = setTimeout(() => {
+        navigate("/forgot-password");
+      }, 3000);
+  
+      return () => clearTimeout(timer);
+    }
+  }, [token, navigate]);
+  
+  if (!token) {
+    return (
+      <div className="container mt-5">
+        <div className="alert alert-danger text-center">
+          Invalid or missing token. Redirecting to forgot password...
+        </div>
+      </div>
+    );
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault();

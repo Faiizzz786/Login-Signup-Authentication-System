@@ -4,16 +4,15 @@ public class ResetPasswordRequest {
     private String token;
     private String newPassword;
 
-    // ✅ Default constructor (needed for JSON serialization)
+   
     public ResetPasswordRequest() {}
 
-    // ✅ Constructor with parameters (optional)
     public ResetPasswordRequest(String token, String newPassword) {
         this.token = token;
         this.newPassword = newPassword;
     }
 
-    // ✅ Getters
+  
     public String getToken() {
         return token;
     }
@@ -22,7 +21,7 @@ public class ResetPasswordRequest {
         return newPassword;
     }
 
-    // ✅ Setters
+  
     public void setToken(String token) {
         this.token = token;
     }

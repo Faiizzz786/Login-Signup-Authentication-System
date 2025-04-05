@@ -69,10 +69,12 @@ const Login = () => {
       const response = await loginUser(formData.email, formData.password);
 
       if (response.locked) {
+        
         setIsLocked(true);
         setRemainingTime(response.remainingTime);
         setErrors({ submit: "Your account is locked. Try again later." });
       } else {
+        localStorage.setItem('token', response.token);
         navigate('/dashboard');
       }
     } catch (error) {

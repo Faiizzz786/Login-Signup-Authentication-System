@@ -70,15 +70,13 @@ public class UserController {
         }
 
         try {
-            // JwtToken jwtResponse = userService.authenticateUser(email, password);
-            // userService.resetFailedLoginAttempts(email);
-            // return ResponseEntity.ok(jwtResponse);
+
             JwtToken jwtResponse = userService.authenticateUser(email, password);
             userService.resetFailedLoginAttempts(email);
 
             return ResponseEntity.ok(Map.of("token", jwtResponse.getToken()));
         } catch (RuntimeException e) {
-            userService.trackFailedLogin(email);
+            // userService.trackFailedLogin(email);
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", e.getMessage()));
         }
     }
@@ -110,13 +108,23 @@ public class UserController {
     // Forgot Password - Request password reset
     @PostMapping("/forgot-password")
     public ResponseEntity<String> forgotPassword(@RequestBody Map<String, String> request) {
-        String email = request.get("email"); /
+        String email = request.get("email");
 
         if (email == null || email.trim().isEmpty()) {
             return ResponseEntity.badRequest().body("Email cannot be empty!");
         }
 
-        return ResponseEntity.ok(userService.requestPasswordReset(email.trim())); 
+        Optional<User> userOptional = userService.findByEmail(email.trim());
+        if (userOptional.isEmpty()) {
+            return ResponseEntity.badRequest().body("User not found!");
+        }
+
+        User user = userOptional.get();
+        if (!user.isVerified()) {
+            return ResponseEntity.badRequest().body("You are not verified yet. Please verify your email first.");
+        }
+
+        return ResponseEntity.ok(userService.requestPasswordReset(email.trim()));
     }
 
     // Reset Password - Use the token to reset password
@@ -140,8 +148,8 @@ public class UserController {
 
     @PostMapping("/reset-password")
     public ResponseEntity<String> resetPassword(@RequestBody ResetPasswordRequest request) {
-        System.out.println("Full Request Body: " + request); // ✅ Debugging
-        System.out.println("Received token: " + request.getToken()); // ✅ Check token
+        System.out.println("Full Request Body: " + request);
+        System.out.println("Received token: " + request.getToken());
         System.out.println("New password: " + request.getNewPassword());
 
         if (request.getToken() == null || request.getToken().isEmpty()) {
